@@ -1,0 +1,47 @@
+name = "pact-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "pact-production"
+database_id = "YOUR_DATABASE_ID_HERE"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+CORS_ORIGIN = "https://pact.example.com"
+
+# Routes
+routes = [
+  { pattern = "api.pact.example.com/*", custom_domain = true }
+]
+
+# Development environment
+[env.development]
+name = "pact-api-dev"
+vars = { ENVIRONMENT = "development", CORS_ORIGIN = "http://localhost:3000" }
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "pact-development"
+database_id = "YOUR_DEV_DATABASE_ID_HERE"
+
+# Staging environment
+[env.staging]
+name = "pact-api-staging"
+vars = { ENVIRONMENT = "staging", CORS_ORIGIN = "https://staging.pact.example.com" }
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "pact-staging"
+database_id = "YOUR_STAGING_DATABASE_ID_HERE"
+
+routes = [
+  { pattern = "api-staging.pact.example.com/*", custom_domain = true }
+]
+
+# Secrets (set via wrangler secret put)
+# JWT_SECRET
+# G2_UPLOAD_TOKEN

@@ -1,0 +1,33 @@
+{
+  "name": "pact-api",
+  "version": "1.0.0",
+  "description": "PACT Recycling Management API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "db:init": "wrangler d1 execute pact-production --file=../database/schema.sql",
+    "db:init:local": "wrangler d1 execute pact-production --local --file=../database/schema.sql",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "@tsndr/cloudflare-worker-jwt": "^2.2.0",
+    "hono": "^3.12.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "vitest": "^1.2.0",
+    "wrangler": "^3.24.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
