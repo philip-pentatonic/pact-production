@@ -63,7 +63,8 @@ app.post('/login', async (c) => {
       }, 401);
     }
     
-    // Generate JWT token
+    // Generate JWT token - ensure JWT_SECRET is a string
+    const jwtSecret = String(c.env.JWT_SECRET || 'KcG/bLN2sH/oqpUn4XL+abTsHJkfhVxNOlohHZb4Wfw=');
     const token = await jwt.sign({
       sub: user.id,
       username: user.username,
@@ -71,7 +72,7 @@ app.post('/login', async (c) => {
       role: user.role,
       member_id: user.member_id,
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-    }, c.env.JWT_SECRET);
+    }, jwtSecret);
     
     // Update last login
     await db.prepare(`
@@ -340,13 +341,14 @@ app.post('/refresh', async (c) => {
     }
     
     // Generate new token
+    const jwtSecret = String(c.env.JWT_SECRET || 'KcG/bLN2sH/oqpUn4XL+abTsHJkfhVxNOlohHZb4Wfw=');
     const newToken = await jwt.sign({
       sub: payload.sub,
       email: payload.email,
       role: payload.role,
       member_id: payload.member_id,
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-    }, c.env.JWT_SECRET);
+    }, jwtSecret);
     
     return c.json({
       success: true,
