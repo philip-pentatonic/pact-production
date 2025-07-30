@@ -210,6 +210,15 @@ app.get('/me', async (c) => {
     const payload = jwt.decode(token);
     const db = c.env.DB;
     
+    // Make sure we have a valid user ID
+    const userId = payload.sub;
+    if (!userId) {
+      return c.json({ 
+        success: false, 
+        error: 'Invalid token payload' 
+      }, 401);
+    }
+    
     // Get fresh user data
     const user = await db.prepare(`
       SELECT 
@@ -218,7 +227,7 @@ app.get('/me', async (c) => {
       FROM users u
       LEFT JOIN members m ON u.member_id = m.id
       WHERE u.id = ? AND u.is_active = 1
-    `).bind(payload.sub).first();
+    `).bind(userId).first();
     
     if (!user) {
       return c.json({ 
@@ -227,9 +236,36 @@ app.get('/me', async (c) => {
       }, 404);
     }
     
+    // Build user response object - avoiding spread operator issues with D1
+    const userResponse = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      role: user.role,
+      member_id: user.member_id,
+      member_name: user.member_name,
+      member_code: null
+    };
+    
+    // Get member code if user has member_id
+    if (user.member_id && user.member_id !== null) {
+      try {
+        const member = await db.prepare(`
+          SELECT code FROM members WHERE id = ?
+        `).bind(user.member_id).first();
+        if (member) {
+          userResponse.member_code = member.code;
+        }
+      } catch (err) {
+        console.error('Error fetching member code:', err);
+      }
+    }
+    
     return c.json({
       success: true,
-      data: user
+      user: userResponse
     });
     
   } catch (error) {

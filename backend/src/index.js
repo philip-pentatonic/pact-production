@@ -15,6 +15,7 @@ import membersRoutes from './routes/members.js';
 import reportsRoutes from './routes/reports.js';
 import g2Routes from './routes/g2.js';
 import healthRoutes from './routes/health.js';
+import notificationsRoutes from './routes/notifications.js';
 
 // Middleware imports
 import { errorHandler } from './middleware/error.js';
@@ -43,6 +44,7 @@ app.route('/api/shipments', shipmentsRoutes);
 app.route('/api/members', membersRoutes);
 app.route('/api/reports', reportsRoutes);
 app.route('/api/g2', g2Routes);
+app.route('/api/notifications', notificationsRoutes);
 
 // Error handling
 app.onError(errorHandler);
