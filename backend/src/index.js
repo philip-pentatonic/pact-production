@@ -31,7 +31,13 @@ const app = new Hono();
 // Global middleware
 app.use('*', logger());
 app.use('*', cors({
-  origin: '*',  // Allow all origins for development
+  origin: [
+    'https://pact-dashboard.pages.dev',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    '*'
+  ],
   credentials: true,
 }));
 
