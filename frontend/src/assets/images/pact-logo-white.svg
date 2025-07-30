@@ -1,0 +1,12 @@
+<svg width="340" height="120" viewBox="0 0 340 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="white">
+    <!-- pact text -->
+    <path d="M0 20h20v60h-20v-60zm30 0h20v20h20v-20h20v60h-20v-20h-20v20h-20v-60zm100 0h20v40h20v-40h20v40c0 11-9 20-20 20h-20c-11 0-20-9-20-20v-40zm70 40v-40h20v40h30v20h-50v-20z"/>
+    
+    <!-- POWERED BY text -->
+    <text x="0" y="100" font-family="Arial, sans-serif" font-size="10" font-weight="400" letter-spacing="1">POWERED BY</text>
+    
+    <!-- PENTATONIC text -->
+    <text x="0" y="115" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.5">PENTATONIC</text>
+  </g>
+</svg>

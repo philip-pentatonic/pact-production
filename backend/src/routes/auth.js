@@ -10,10 +10,13 @@ import { verifyPassword, hashPassword } from '../utils/password.js';
 
 const app = new Hono();
 
-// Login schema
+// Login schema - supports both username and email
 const loginSchema = z.object({
-  username: z.string().min(1),
+  username: z.string().min(1).optional(),
+  email: z.string().min(1).optional(),
   password: z.string().min(1),
+}).refine((data) => data.username || data.email, {
+  message: 'Either username or email is required',
 });
 
 // Register schema (for admin use)
@@ -31,15 +34,18 @@ const registerSchema = z.object({
 app.post('/login', async (c) => {
   try {
     const body = await c.req.json();
-    const { username, password } = loginSchema.parse(body);
+    const { username, email, password } = loginSchema.parse(body);
     const db = c.env.DB;
+    
+    // Use email or username for lookup
+    const identifier = email || username;
     
     // Find user by username or email
     const user = await db.prepare(`
       SELECT id, username, email, password_hash, first_name, last_name, role, member_id, is_active
       FROM users
       WHERE (username = ? OR email = ?) AND is_active = 1
-    `).bind(username, username).first();
+    `).bind(identifier, identifier).first();
     
     if (!user) {
       return c.json({ 
@@ -72,19 +78,26 @@ app.post('/login', async (c) => {
       UPDATE users SET last_login = datetime('now') WHERE id = ?
     `).bind(user.id).run();
     
+    // Get member code if user has member_id
+    let member_code = null;
+    if (user.member_id) {
+      const member = await db.prepare(`
+        SELECT code FROM members WHERE id = ?
+      `).bind(user.member_id).first();
+      member_code = member?.code || null;
+    }
+    
     return c.json({
-      success: true,
-      data: {
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          role: user.role,
-          member_id: user.member_id
-        }
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        member_id: user.member_id,
+        member_code: member_code
       }
     });
     

@@ -2,50 +2,174 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900;
-  }
+:root {
+  /* Default theme variables - will be overridden by ThemeProvider */
+  --color-primary: #2E888D;
+  --color-primary-hover: #267278;
+  --color-secondary: #51ADA5;
+  --color-accent: #73B5B2;
+  --color-background: #FFFFFF;
+  --color-surface: #F8FAFA;
+  --color-text-primary: #1C1C1C;
+  --color-text-secondary: #4A5568;
+  --color-text-muted: #718096;
+  --color-border: #DCE4E2;
+  --color-success: #48BB78;
+  --color-warning: #ED8936;
+  --color-error: #F56565;
+  --color-info: #4299E1;
+  --gradient-primary: linear-gradient(135deg, #2E888D 0%, #51ADA5 100%);
+  --gradient-card: linear-gradient(135deg, #F8FAFA 0%, #FFFFFF 100%);
 }
 
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-  }
-  
-  .btn-primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus-visible:ring-gray-500;
-  }
-  
-  .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600;
-  }
-  
-  .btn-sm {
-    @apply h-9 px-3 text-sm;
-  }
-  
-  .btn-md {
-    @apply h-10 px-4;
-  }
-  
-  .btn-lg {
-    @apply h-11 px-8;
-  }
-  
-  .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200;
-  }
-  
-  .input {
-    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  
-  .label {
-    @apply text-sm font-medium text-gray-700;
-  }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-surface, #f0f2f5);
+  color: var(--color-text-primary);
 }
+
+/* Tenant-aware utility classes */
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-primary-hover:hover { background-color: var(--color-primary-hover) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.bg-accent { background-color: var(--color-accent) !important; }
+.bg-surface { background-color: var(--color-surface) !important; }
+
+.text-primary { color: var(--color-primary) !important; }
+.text-secondary { color: var(--color-secondary) !important; }
+.text-accent { color: var(--color-accent) !important; }
+
+.border-primary { border-color: var(--color-primary) !important; }
+.border-secondary { border-color: var(--color-secondary) !important; }
+.border-default { border-color: var(--color-border) !important; }
+
+.gradient-primary { background: var(--gradient-primary) !important; }
+.gradient-card { background: var(--gradient-card) !important; }
+
+/* Fix for Recharts tooltip rendering issues */
+.recharts-tooltip-wrapper {
+  pointer-events: none !important;
+  z-index: 1000 !important;
+}
+
+.recharts-default-tooltip {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  max-width: 200px !important;
+}
+
+.recharts-default-tooltip[style*="visibility: hidden"] {
+  display: none !important;
+}
+
+/* Ensure tooltips don't create grey blocks */
+.recharts-tooltip-wrapper[style*="visibility: hidden"] {
+  display: none !important;
+}
+
+/* PDF Export Specific Styles */
+.pdf-export {
+  background-color: white !important;
+  padding: 20px !important;
+}
+
+.pdf-export .bg-gray-50 {
+  background-color: white !important;
+}
+
+.pdf-export .shadow,
+.pdf-export .shadow-sm,
+.pdf-export .shadow-lg {
+  box-shadow: none !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.pdf-export .rounded-lg {
+  border-radius: 6px !important;
+}
+
+.pdf-export h2 {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  font-size: 24px !important;
+  margin-bottom: 12px !important;
+}
+
+.pdf-export h3 {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+
+.pdf-export table {
+  border-collapse: collapse !important;
+}
+
+.pdf-export table th,
+.pdf-export table td {
+  padding: 4px 8px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  font-size: 11px !important;
+}
+
+.pdf-export .recharts-surface {
+  background-color: transparent !important;
+}
+
+.pdf-export .recharts-cartesian-grid-horizontal line,
+.pdf-export .recharts-cartesian-grid-vertical line {
+  stroke: #e5e7eb !important;
+}
+
+.pdf-export .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.pdf-export .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Ensure compact spacing in PDF */
+.pdf-export .p-6 { padding: 16px !important; }
+.pdf-export .p-4 { padding: 12px !important; }
+.pdf-export .p-3 { padding: 8px !important; }
+.pdf-export .mb-8 { margin-bottom: 16px !important; }
+.pdf-export .mb-6 { margin-bottom: 12px !important; }
+.pdf-export .mb-4 { margin-bottom: 8px !important; }
+.pdf-export .mb-3 { margin-bottom: 6px !important; }
+.pdf-export .gap-8 { gap: 16px !important; }
+.pdf-export .gap-6 { gap: 12px !important; }
+.pdf-export .gap-4 { gap: 8px !important; }
+.pdf-export .mt-8 { margin-top: 16px !important; }
+.pdf-export .mt-6 { margin-top: 12px !important; }
+.pdf-export .mt-4 { margin-top: 8px !important; }
+.pdf-export .space-y-6 > * + * { margin-top: 12px !important; }
+.pdf-export .space-y-4 > * + * { margin-top: 8px !important; }
+
+/* Hide overflow indicators in PDF */
+.pdf-export .overflow-y-auto {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Ensure charts don't overflow */
+.pdf-export .recharts-wrapper {
+  font-size: 11px !important;
+}
+
+/* Ensure material table is visible in PDF */
+.pdf-export .max-h-64 {
+  max-height: none !important;
+  overflow: visible !important;
+} 
