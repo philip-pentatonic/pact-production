@@ -16,6 +16,11 @@ import reportsRoutes from './routes/reports.js';
 import g2Routes from './routes/g2.js';
 import healthRoutes from './routes/health.js';
 import notificationsRoutes from './routes/notifications.js';
+import dataRoutes from './routes/data.js';
+import kioskRoutes from './routes/kiosk.js';
+import publicRoutes from './routes/public.js';
+import analyticsRoutes from './routes/analytics.js';
+import adminRoutes from './routes/admin.js';
 
 // Middleware imports
 import { errorHandler } from './middleware/error.js';
@@ -36,10 +41,17 @@ app.route('/health', healthRoutes);
 // Auth routes (login, logout, etc.)
 app.route('/api/auth', authRoutes);
 
+// Public routes (no auth required)
+app.route('/api/public', publicRoutes);
+
 // Protected routes
 app.use('/api/*', requireAuth());
 
 // API routes
+app.route('/api/data', dataRoutes);
+app.route('/api/kiosk', kioskRoutes);
+app.route('/api/analytics', analyticsRoutes);
+app.route('/api/admin', adminRoutes);
 app.route('/api/shipments', shipmentsRoutes);
 app.route('/api/members', membersRoutes);
 app.route('/api/reports', reportsRoutes);

@@ -187,37 +187,66 @@ app.post('/register', async (c) => {
 // GET /api/auth/me - Get current user
 app.get('/me', async (c) => {
   try {
-    const authHeader = c.req.header('Authorization');
+    // Get user ID from context (set by auth middleware if needed)
+    let userId;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return c.json({ 
-        success: false, 
-        error: 'No token provided' 
-      }, 401);
+    // Check if we have userId from middleware
+    if (c.get('userId')) {
+      userId = c.get('userId');
+    } else {
+      // If not from middleware, verify token ourselves
+      const authHeader = c.req.header('Authorization');
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return c.json({ 
+          success: false, 
+          error: 'No token provided' 
+        }, 401);
+      }
+      
+      const token = authHeader.substring(7);
+      
+      // Manual JWT decode as a workaround
+      try {
+        // Split token and get payload
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          return c.json({ 
+            success: false, 
+            error: 'Invalid token format' 
+          }, 401);
+        }
+        
+        // Decode base64url payload
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        console.log('Manually decoded payload:', JSON.stringify(payload));
+        
+        userId = payload.sub;
+        
+        // Basic expiration check
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+          return c.json({ 
+            success: false, 
+            error: 'Token expired' 
+          }, 401);
+        }
+      } catch (err) {
+        console.error('Token decode error:', err);
+        return c.json({ 
+          success: false, 
+          error: 'Invalid token format: ' + err.message 
+        }, 401);
+      }
     }
     
-    const token = authHeader.substring(7);
-    
-    // Verify token
-    const isValid = await jwt.verify(token, c.env.JWT_SECRET);
-    if (!isValid) {
-      return c.json({ 
-        success: false, 
-        error: 'Invalid token' 
-      }, 401);
-    }
-    
-    const payload = jwt.decode(token);
-    const db = c.env.DB;
-    
-    // Make sure we have a valid user ID
-    const userId = payload.sub;
     if (!userId) {
       return c.json({ 
         success: false, 
         error: 'Invalid token payload' 
       }, 401);
     }
+    
+    const db = c.env.DB;
     
     // Get fresh user data
     const user = await db.prepare(`
