@@ -24,7 +24,7 @@ async function seed() {
   try {
     // Build wrangler command
     const envFlag = env === 'development' || env === 'staging' ? `--env ${env}` : '';
-    const cmd = `cd backend && wrangler d1 execute DB ${isLocal ? '--local' : ''} ${envFlag} --file=../database/seed.sql`;
+    const cmd = `cd backend && wrangler d1 execute DB ${isLocal ? '--local' : '--remote'} ${envFlag} --file=../database/seed.sql`;
     
     console.log(`Running seed command...`);
     execSync(cmd, { stdio: 'inherit' });

@@ -35,7 +35,7 @@ async function runMigrations() {
     try {
       // Build wrangler command
       const envFlag = env === 'development' || env === 'staging' ? `--env ${env}` : '';
-      const cmd = `cd backend && wrangler d1 execute DB ${isLocal ? '--local' : ''} ${envFlag} --file=../database/migrations/${file}`;
+      const cmd = `cd backend && wrangler d1 execute DB ${isLocal ? '--local' : '--remote'} ${envFlag} --file=../database/migrations/${file}`;
       
       console.log(`Command: ${cmd}`);
       execSync(cmd, { stdio: 'inherit' });
