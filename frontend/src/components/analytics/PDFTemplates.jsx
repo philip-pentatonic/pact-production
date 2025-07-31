@@ -43,14 +43,19 @@ export const PROGRAM_COLORS = {
 };
 
 // Cover Page Template
-export const CoverPageTemplate = ({ memberName, dateRange }) => {
+export const CoverPageTemplate = ({ memberName, dateRange, quarter }) => {
   const formatDateShort = (date) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${months[date.getMonth()]} ${date.getDate().toString().padStart(2, '0')} ${date.getFullYear()}`;
   };
 
-  const allTimeStartDate = new Date(dateRange.startDate);
-  const allTimeEndDate = new Date(dateRange.endDate);
+  const formatDateLong = (date) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
+  const startDate = new Date(dateRange.startDate);
+  const endDate = new Date(dateRange.endDate);
 
   return (
     <div className="pdf-page cover-page" style={{
@@ -121,8 +126,7 @@ export const CoverPageTemplate = ({ memberName, dateRange }) => {
           fontWeight: '300',
           lineHeight: '1.5'
         }}>
-          <div>All Time : {formatDateShort(allTimeStartDate)} - {formatDateShort(allTimeEndDate)}  &</div>
-          <div>Year to Date : Jan 01 2025 - March 31 2025</div>
+          <div>{quarter || 'Report Period'}: {formatDateLong(startDate)} to {formatDateLong(endDate)}</div>
         </div>
       </div>
 

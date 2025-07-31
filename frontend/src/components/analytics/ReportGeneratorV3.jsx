@@ -19,8 +19,8 @@ function ReportGeneratorV3() {
   const [members, setMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState('all');
   const [dateRange, setDateRange] = useState({
-    startDate: '2021-04-01',
-    endDate: '2025-03-31'
+    startDate: '2025-04-01',
+    endDate: '2025-06-30'
   });
   const [reportData, setReportData] = useState(null);
   const [showYTD, setShowYTD] = useState(false);
@@ -93,7 +93,7 @@ function ReportGeneratorV3() {
       // Adjust date range for YTD view
       const adjustedDateRange = showYTD ? {
         startDate: '2025-01-01',
-        endDate: '2025-03-31'
+        endDate: '2025-12-31'
       } : dateRange;
 
       const params = new URLSearchParams({
@@ -109,8 +109,16 @@ function ReportGeneratorV3() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        const processedData = processReportDataForTrevor(data);
+        const result = await response.json();
+        console.log('Report API response:', result);
+        console.log('Report data structure:', {
+          summary: result.data?.summary,
+          programTypes: result.data?.programTypes,
+          materialBreakdown: result.data?.materialBreakdown,
+          monthlyBreakdown: result.data?.monthlyBreakdown
+        });
+        const processedData = processReportDataForTrevor(result.data || result);
+        console.log('Processed report data:', processedData);
         setReportData(processedData);
       } else {
         setError('Failed to fetch report data');
@@ -124,6 +132,11 @@ function ReportGeneratorV3() {
   };
 
   const processReportDataForTrevor = (data) => {
+    if (!data) {
+      console.error('No data provided to processReportDataForTrevor');
+      return null;
+    }
+    
     // Process program types (map our program_type to Trevor categories)
     const programTypeMapping = {
       'drop-off': 'In-Store/In-Office',
@@ -133,7 +146,7 @@ function ReportGeneratorV3() {
 
     // Calculate program type totals
     const programTypeTotals = {};
-    let totalWeight = 0;
+    let programTypeWeight = 0;
     
     (data.programTypes || []).forEach(item => {
       const mappedType = programTypeMapping[item.program] || 'In-Store/In-Office';
@@ -141,7 +154,7 @@ function ReportGeneratorV3() {
         programTypeTotals[mappedType] = 0;
       }
       programTypeTotals[mappedType] += item.weight || 0;
-      totalWeight += item.weight || 0;
+      programTypeWeight += item.weight || 0;
     });
 
     // Ensure all program types are present
@@ -169,22 +182,24 @@ function ReportGeneratorV3() {
       'MISC': 'Mis. Recyclable Material'
     };
 
+    console.log('Raw material breakdown:', data.materialBreakdown);
     const materialData = (data.materialBreakdown || []).map(item => ({
-      name: materialMapping[item.code] || item.name,
-      value: item.weight || 0,
-      code: item.code
+      name: materialMapping[item.material_type] || item.material_type,
+      value: item.weight_lbs || 0,
+      code: item.material_type
     }));
+    console.log('Processed material data:', materialData);
 
     // Process yearly data
     const yearlyData = [];
     const yearTotals = {};
     
-    (data.monthlyTrends || []).forEach(item => {
+    (data.monthlyBreakdown || []).forEach(item => {
       const year = item.month.substring(0, 4);
       if (!yearTotals[year]) {
         yearTotals[year] = 0;
       }
-      yearTotals[year] += item.weight || 0;
+      yearTotals[year] += item.weight_lbs || 0;
     });
 
     Object.keys(yearTotals).sort().forEach(year => {
@@ -194,9 +209,11 @@ function ReportGeneratorV3() {
       });
     });
 
-    return {
+    const processedData = {
       ...data,
-      totalWeight: totalWeight || data.totalWeight,
+      totalWeight: data.summary?.total_weight_lbs || 0,
+      totalPackages: data.summary?.total_packages || 0,
+      activeStores: data.summary?.active_stores || 0,
       programTypeData,
       programTypeTable: programTypeData.map(d => ({
         type: `Total ${d.name} Volume`,
@@ -207,9 +224,18 @@ function ReportGeneratorV3() {
       yearlyData,
       quarterlyData: [{
         quarter: 'Q1',
-        weight: totalWeight || data.totalWeight
+        weight: data.summary?.total_weight_lbs || 0
       }]
     };
+    
+    console.log('Final processed data:', {
+      totalWeight: processedData.totalWeight,
+      summary: data.summary,
+      materialDataCount: processedData.materialData.length,
+      totalMaterialWeight: processedData.materialData.reduce((sum, m) => sum + m.value, 0)
+    });
+    
+    return processedData;
   };
 
   const getChartCaptureOptions = (element) => ({
@@ -287,6 +313,30 @@ function ReportGeneratorV3() {
     try {
       const memberName = selectedMember === 'all' ? 'All Programs' : members.find(m => m.id == selectedMember)?.name || 'Program';
       
+      // Determine quarter and proper date range for display
+      let quarter, displayDateRange;
+      
+      if (showYTD) {
+        quarter = 'YTD';
+        displayDateRange = { startDate: '2025-01-01', endDate: '2025-03-31' };
+      } else {
+        // Calculate quarter from end date
+        const endDate = new Date(dateRange.endDate);
+        const month = endDate.getMonth();
+        const year = endDate.getFullYear();
+        const q = Math.floor(month / 3) + 1;
+        quarter = `Q${q}`;
+        
+        // Set proper quarter dates
+        const quarterStart = new Date(year, (q - 1) * 3, 1);
+        const quarterEnd = new Date(year, q * 3, 0); // Last day of quarter
+        
+        displayDateRange = {
+          startDate: quarterStart.toISOString().split('T')[0],
+          endDate: quarterEnd.toISOString().split('T')[0]
+        };
+      }
+      
       // PAGE 1: Cover Page
       const coverPage = document.createElement('div');
       tempContainer.appendChild(coverPage);
@@ -294,7 +344,8 @@ function ReportGeneratorV3() {
       coverRoot.render(
         <CoverPageTemplate 
           memberName={memberName}
-          dateRange={dateRange}
+          dateRange={displayDateRange}
+          quarter={quarter}
         />
       );
       
@@ -334,8 +385,8 @@ function ReportGeneratorV3() {
       metricsRoot.render(
         <MetricsPageTemplate 
           title="PACT COLLECTIVE PROGRAM METRICS"
-          subtitle="ALL TIME"
-          dateRange={formatDateRange(allTimeStartDate, allTimeEndDate)}
+          subtitle={quarter}
+          dateRange={formatDateRange(new Date(displayDateRange.startDate), new Date(displayDateRange.endDate))}
           metrics={allTimeMetrics}
           programData={reportData.programTypeData}
           yearlyData={reportData.yearlyData}
@@ -366,8 +417,8 @@ function ReportGeneratorV3() {
       materialRoot.render(
         <MaterialBreakdownTemplate 
           title="MATERIAL BREAKDOWN BY TYPE"
-          subtitle="ALL TIME"
-          dateRange={formatDateRange(allTimeStartDate, allTimeEndDate)}
+          subtitle={quarter}
+          dateRange={formatDateRange(new Date(displayDateRange.startDate), new Date(displayDateRange.endDate))}
           materialData={reportData.materialData}
           totalWeight={reportData.totalWeight}
           showFooter={false}
@@ -393,7 +444,7 @@ function ReportGeneratorV3() {
         const ytdParams = new URLSearchParams({
           member_id: selectedMember === 'all' ? '' : selectedMember,
           start_date: '2025-01-01',
-          end_date: '2025-03-31'
+          end_date: '2025-12-31'
         });
         
         const ytdResponse = await fetch(getApiUrl(`/analytics/member-report?${ytdParams}`), {
@@ -403,8 +454,21 @@ function ReportGeneratorV3() {
         });
         
         if (ytdResponse.ok) {
-          const ytdData = await ytdResponse.json();
-          const processedYTDData = processReportDataForTrevor(ytdData);
+          const ytdResult = await ytdResponse.json();
+          console.log('YTD API response:', ytdResult);
+          const processedYTDData = processReportDataForTrevor(ytdResult.data || ytdResult);
+          
+          if (!processedYTDData) {
+            console.error('Failed to process YTD data');
+            return;
+          }
+          
+          console.log('Processed YTD data:', {
+            totalWeight: processedYTDData.totalWeight,
+            totalPackages: processedYTDData.totalPackages,
+            materialCount: processedYTDData.materialData?.length,
+            programTypes: processedYTDData.programTypeData
+          });
           
           // PAGE 4: YTD Metrics
           pdf.addPage();
@@ -493,12 +557,31 @@ function ReportGeneratorV3() {
     return pdf;
   };
 
+  const getQuarterFromDate = (dateStr) => {
+    const date = new Date(dateStr);
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const quarter = Math.floor(month / 3) + 1;
+    return `Q${quarter} ${year}`;
+  };
+
   const handleGeneratePDF = async () => {
     setGenerating(true);
     try {
       const pdf = await generatePDF();
-      const memberName = selectedMember === 'all' ? 'All_Programs' : members.find(m => m.id == selectedMember)?.code || 'Program';
-      const fileName = `PACT_Program_Metrics_${memberName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const memberName = selectedMember === 'all' ? 'All Members' : members.find(m => m.id == selectedMember)?.name || 'Member';
+      
+      // Determine quarter based on date range
+      let quarter;
+      if (showYTD) {
+        quarter = 'YTD 2025';
+      } else {
+        // Use end date to determine quarter
+        quarter = getQuarterFromDate(dateRange.endDate);
+      }
+      
+      // Format: Member Name_Q2 2025 Report
+      const fileName = `${memberName}_${quarter} Report.pdf`;
       pdf.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -539,7 +622,17 @@ function ReportGeneratorV3() {
           const pdf = await generatePDF();
           
           // Save with member-specific filename
-          const fileName = `PACT_Report_${member.code}_${showYTD ? 'YTD' : dateRange.startDate}_${dateRange.endDate}.pdf`;
+          // Determine quarter based on date range
+          let quarter;
+          if (showYTD) {
+            quarter = 'YTD 2025';
+          } else {
+            // Use end date to determine quarter
+            quarter = getQuarterFromDate(dateRange.endDate);
+          }
+          
+          // Format: Member Name_Q2 2025 Report
+          const fileName = `${member.name}_${quarter} Report.pdf`;
           pdf.save(fileName);
           
           // Wait between PDFs
