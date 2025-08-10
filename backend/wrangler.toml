@@ -2,11 +2,11 @@ name = "pact-api"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# D1 Database binding
+# D1 Database binding - NOW TRULY ISOLATED!
 [[d1_databases]]
 binding = "DB"
-database_name = "pact-production"
-database_id = "1c49802a-59ac-4a55-b2be-f700f71e0dfe"
+database_name = "pact-production-isolated"
+database_id = "72ae02ed-8e13-4c51-b1f7-c30e449786be"
 
 # Environment variables
 [vars]
